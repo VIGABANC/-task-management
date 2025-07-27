@@ -1,0 +1,344 @@
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import Pagination from '@mui/material/Pagination';
+import '../../../styles/DivisionManagement.css';
+
+const apiUrl = 'http://127.0.0.1:8000/api/v1';
+
+export default function AdminDivisions() {
+  const [divisions, setDivisions] = useState([]);
+  const [filteredDivisions, setFilteredDivisions] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
+  const [allStatuses, setAllStatuses] = useState([]);
+  const [modalTasks, setModalTasks] = useState(null);
+  const [form, setForm] = useState({ name: '', responsable: '', password: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Column-specific filter states
+  const [filterName, setFilterName] = useState('');
+  const [filterResp, setFilterResp] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  // Load divisions, tasks, statuses
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [divRes, taskRes, statusRes] = await Promise.all([
+          axios.get(`${apiUrl}/divisions`),
+          axios.get(`${apiUrl}/tasks`),
+          axios.get(`${apiUrl}/statuses`)
+        ]);
+        setDivisions(divRes.data);
+        setAllTasks(taskRes.data);
+        setAllStatuses(statusRes.data);
+        setError('');
+      } catch (err) {
+        console.error('Erreur lors du chargement des données:', err);
+        setError('Échec du chargement des divisions, tâches ou statuts');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Apply filters whenever data or filter values change
+  useEffect(() => {
+    let result = divisions;
+
+    if (filterName.trim()) {
+      const q = filterName.toLowerCase();
+      result = result.filter(d => d.division_nom.toLowerCase().includes(q));
+    }
+
+    if (filterResp.trim()) {
+      const q = filterResp.toLowerCase();
+      result = result.filter(d => d.division_responsable.toLowerCase().includes(q));
+    }
+
+    if (filterStatus) {
+      result = result.filter(div =>
+        allTasks
+          .filter(t => t.division_id === div.division_id)
+          .some(t =>
+            allStatuses
+              .filter(s => s.task_id === t.task_id)
+              .some(s => s.statut === filterStatus)
+          )
+      );
+    }
+
+    setFilteredDivisions(result);
+  }, [divisions, allTasks, allStatuses, filterName, filterResp, filterStatus]);
+
+  // Open tasks modal for a division
+  const openTasks = (div) => {
+    const tasks = allTasks.filter(t => t.division_id === div.division_id);
+    const tasksWithStates = tasks.map(t => ({
+      ...t,
+      states: allStatuses.filter(s => s.task_id === t.task_id)
+    }));
+    setModalTasks({ divisionName: div.division_nom, tasks: tasksWithStates });
+  };
+
+  const closeModal = () => setModalTasks(null);
+
+  // Handle form field changes
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Add or update division
+  const handleAddOrEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        division_nom: form.name,
+        division_responsable: form.responsable,
+        password: form.password
+      };
+
+      if (editingId) {
+        await axios.put(`${apiUrl}/divisions/${editingId}`, payload);
+      } else {
+        await axios.post(`${apiUrl}/divisions`, payload);
+      }
+
+      setForm({ name: '', responsable: '', password: '' });
+      setEditingId(null);
+      const divRes = await axios.get(`${apiUrl}/divisions`);
+      setDivisions(divRes.data);
+      setError('');
+    } catch (err) {
+      console.error('Error saving division:', err);
+      setError(err.response?.data?.message || 'Opération échouée');
+    }
+  };
+
+  // Populate form for editing
+  const startEdit = (div) => {
+    setForm({
+      name: div.division_nom,
+      responsable: div.division_responsable,
+      password: div.password
+    });
+    setEditingId(div.division_id);
+  };
+
+  // Unique status options
+  const uniqueStatuses = [...new Set(allStatuses.map(s => s.statut))];
+
+  // Handle page change
+  const handlePageChange = useCallback((event, value) => {
+    setPage(value);
+  }, []);
+
+  // Compute paged data
+  const pagedDivisions = useMemo(() => {
+    const start = (page - 1) * itemsPerPage;
+    return filteredDivisions.slice(start, start + itemsPerPage);
+  }, [filteredDivisions, page]);
+
+  return (
+    <div className="admin-divisions">
+      <h1>Gestion des divisions</h1>
+
+      {error && <div className="error-message">{error}</div>}
+      {loading && <div className="loading-indicator">Chargement...</div>}
+
+      {/* Column Filters */}
+      <div className="column-filters">
+        <input
+          type="text"
+          placeholder="Filtrer par nom"
+          value={filterName}
+          onChange={e => setFilterName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Filtrer par responsable"
+          value={filterResp}
+          onChange={e => setFilterResp(e.target.value)}
+        />
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+        >
+          <option value="">Tous les statuts</option>
+          {uniqueStatuses.map((s, i) => (
+            <option key={i} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Add / Edit Form */}
+      <form className="division-form" onSubmit={handleAddOrEdit}>
+        <input
+          name="name"
+          placeholder="Nom de la division"
+          value={form.name}
+          onChange={handleFormChange}
+          required
+        />
+        <input
+          name="responsable"
+          placeholder="Personne responsable"
+          value={form.responsable}
+          onChange={handleFormChange}
+          required
+        />
+        <input
+          name="password"
+          placeholder="Mot de passe"
+          type="password"
+          value={form.password}
+          onChange={handleFormChange}
+          required
+          autoComplete="current-password"
+        />
+        <div className="form-buttons">
+          <button type="submit" className="submit-button">
+            {editingId ? 'Mettre à jour' : 'Ajouter'} Division
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={() => {
+                setEditingId(null);
+                setForm({ name: '', responsable: '', password: '' });
+              }}
+            >
+              Annuler
+            </button>
+          )}
+        </div>
+      </form>
+
+      {/* Divisions Table */}
+      <div className="table-container">
+        <table className="division-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Responsable</th>
+              <th>Mot de passe</th>
+              <th>Tâches</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagedDivisions.map(div => (
+              <tr key={div.division_id}>
+                <td>{div.division_nom}</td>
+                <td>{div.division_responsable}</td>
+                <td>{div.password}</td>
+                <td>
+                  <button
+                    className="view-button"
+                    onClick={() => openTasks(div)}
+                  >
+                    Voir les tâches ({allTasks.filter(t => t.division_id === div.division_id).length})
+                  </button>
+                </td>
+                <td>
+                  <button className="edit-button" onClick={() => startEdit(div)}>
+                    Modifier
+                  </button>
+                 
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination
+          count={Math.ceil(filteredDivisions.length / itemsPerPage)}
+          page={page}
+          onChange={handlePageChange}
+          showFirstButton
+          showLastButton
+          sx={{ 
+            mt: 2, 
+            display: 'flex', 
+            justifyContent: 'center',
+            '& .MuiPaginationItem-root': {
+              color: '$primary',
+              '&.Mui-selected': {
+                backgroundColor: '$primary',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '$primary',
+                  opacity: 0.8
+                }
+              }
+            }
+          }}
+        />
+      </div>
+
+      {/* Tasks Modal */}
+      {modalTasks && (
+        <div className="division-tasks-modal-backdrop" onClick={closeModal}>
+          <div className="division-tasks-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="division-tasks-modal-header">
+              <h2>Tâches pour {modalTasks.divisionName}</h2>
+              <button className="close-button" onClick={closeModal}>&times;</button>
+            </div>
+            <div className="division-tasks-modal-body">
+              {modalTasks.tasks.length === 0 ? (
+                <div className="division-no-tasks">Aucune tâche trouvée pour cette division</div>
+              ) : (
+                <table className="division-tasks-table">
+                  <thead>
+                    <tr>
+                      <th>Nom de la tâche</th>
+                      <th>Description</th>
+                      <th>Date d'échéance</th>
+                      <th>Date de fin</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modalTasks.tasks.map(task => {
+                      const lastState = task.states[task.states.length - 1];
+                      return (
+                        <tr key={task.task_id}>
+                          <td>{task.task_name}</td>
+                          <td>{task.description || '-'}</td>
+                          <td>{task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}</td>
+                          <td>{task.fin_date ? new Date(task.fin_date).toLocaleDateString() : '-'}</td>
+                          <td>
+                            {lastState ? (
+                              <span className={`status-badge ${lastState.statut.toLowerCase().replace(/\s+/g, '_')}`}>
+                                {lastState.statut}
+                              </span>
+                            ) : (
+                              <span className="no-status">En attente</span>
+                            )}
+                          </td>
+                          <td>
+                            <button className="history-button">
+                              <Link to={`/app/HistoryAdmin/${task.task_id}`}>Voir l'historique</Link>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

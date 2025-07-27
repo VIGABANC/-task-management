@@ -1,0 +1,539 @@
+/* Base Styles */
+.admin-divisions {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #333;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #1a1a1a;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Error & Loading States */
+.loading-indicator {
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin: 1rem 0;
+  font-size: 1rem;
+}
+
+/* Form Styles */
+.division-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.division-form input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.division-form input:focus {
+  border-color: #3b82f6;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.submit-button,
+.cancel-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  font-weight: 500;
+}
+
+.submit-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.submit-button:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.cancel-button {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+}
+
+.cancel-button:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+
+/* Table Styles */
+.table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.division-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.division-table th,
+.division-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.division-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.view-button {
+  background: #e0e7ff;
+  color: #4f46e5;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.view-button:hover {
+  background: #c7d2fe;
+}
+
+/* Action Buttons */
+.edit-button,
+.delete-button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  font-weight: 500;
+}
+
+.edit-button {
+  background: #dcfce7;
+  color: #16a34a;
+  margin-right: 0.5rem;
+}
+
+.edit-button:hover {
+  background: #bbf7d0;
+  transform: translateY(-2px);
+}
+
+.delete-button {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-button:hover {
+  background: #fecaca;
+  transform: translateY(-2px);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .division-form {
+    padding: 1rem;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+
+  .submit-button,
+  .cancel-button {
+    width: 100%;
+  }
+
+  .tasks-table th,
+  .tasks-table td {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+
+  .edit-button,
+  .delete-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+  }
+}
+
+/* Modal Styles */
+.division-tasks-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.division-tasks-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 95%;
+  height: 95vh;
+  max-width: 1800px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.division-tasks-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: #f3f4f6;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.division-tasks-modal-header h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.division-tasks-modal-body {
+  padding: 2rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.division-tasks-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.division-tasks-modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.division-tasks-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  border: 2px solid #f1f5f9;
+}
+
+.division-tasks-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Division Tasks Table in Modal */
+.division-tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  flex-grow: 1;
+}
+
+.division-tasks-table th,
+.division-tasks-table td {
+  padding: 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.1rem;
+}
+
+.division-tasks-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.division-tasks-table td {
+  vertical-align: middle;
+}
+
+.division-no-tasks {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+/* Responsive Design for Division Tasks Modal */
+@media (min-width: 1600px) {
+  .division-tasks-modal-content {
+    width: 98%;
+    height: 98vh;
+  }
+  
+  .division-tasks-table th,
+  .division-tasks-table td {
+    padding: 1.5rem;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .division-tasks-modal-content {
+    width: 95%;
+    height: 95vh;
+  }
+  
+  .division-tasks-table th,
+  .division-tasks-table td {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .division-tasks-modal-content {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .division-tasks-modal-header {
+    padding: 1rem;
+  }
+
+  .division-tasks-modal-body {
+    padding: 1rem;
+  }
+
+  .division-tasks-table th,
+  .division-tasks-table td {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Column Filters */
+.column-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.column-filters input,
+.column-filters select {
+  flex: 1 1 150px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.column-filters select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20...%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+}
+
+/* Modal Filter Input */
+.modal-filter-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  transition: border-color 0.3s ease;
+}
+
+.modal-filter-input:focus {
+  border-color: #3b82f6;
+}
+
+/* Status Color Palette */
+:root {
+  /* in_progress - Blue Theme */
+  --status-en-cours-bg: #e0f2fe;
+  --status-en-cours-border: #bae6fd;
+  --status-en-cours-text: #0284c7;
+  
+  /* completed - Green Theme */
+  --status-termine-bg: #d1fae5;
+  --status-termine-border: #a7f3d0;
+  --status-termine-text: #059669;
+  
+  /* pending - Yellow Theme */
+  --status-en-attente-bg: #fef9c3;
+  --status-en-attente-border: #fef08a;
+  --status-en-attente-text: #ca8a04;
+  
+  /* cancelled - Red Theme */
+  --status-annule-bg: #fee2e2;
+  --status-annule-border: #fecaca;
+  --status-annule-text: #dc2626;
+}
+
+/* Status Badges with Updated Colors */
+.status-badge {
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+/* in_progress */
+.status-badge.in_progress {
+  background: var(--status-en-cours-bg);
+  color: var(--status-en-cours-text);
+  border: 1px solid var(--status-en-cours-border);
+}
+
+/* completed */
+.status-badge.completed {
+  background: var(--status-termine-bg);
+  color: var(--status-termine-text);
+  border: 1px solid var(--status-termine-border);
+}
+
+/* pending */
+.status-badge.pending {
+  background: var(--status-en-attente-bg);
+  color: var(--status-en-attente-text);
+  border: 1px solid var(--status-en-attente-border);
+}
+
+/* cancelled */
+.status-badge.cancelled {
+  background: var(--status-annule-bg);
+  color: var(--status-annule-text);
+  border: 1px solid var(--status-annule-border);
+}
+
+/* Hover Effects for Status Badges */
+.status-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Action Buttons in Modal */
+.history-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.history-button:hover {
+  background: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+}
+
+.history-button:active {
+  transform: translateY(0);
+}
+
+.history-button a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-button a::before {
+  content: '👁️';
+  font-size: 1.1rem;
+}
+
+/* No Status Badge */
+.no-status {
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-status::before {
+  content: '⏳';
+  font-size: 1.1rem;
+}
+
+/* Close Button in Modal */
+.close-button {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: #e2e8f0;
+  color: #dc2626;
+  transform: rotate(90deg);
+}

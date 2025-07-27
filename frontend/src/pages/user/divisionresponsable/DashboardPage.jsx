@@ -1,0 +1,301 @@
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale
+} from 'chart.js';
+// import './stylesres/dachboarespage.css';
+import { Box, Typography } from '@mui/material';
+
+// Register ChartJS components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
+
+const apiUrl = 'http://127.0.0.1:8000/api/v1';
+
+const DashboardPage = ({user}) => {
+  const [divisionData, setDivisionData] = useState({});
+  const [tasks, setTasks] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch division data (example for division ID 1)
+        const divisionRes = await axios.get(`${apiUrl}/divisions/${user.division_id}`);
+        setDivisionData(divisionRes.data);
+
+        // Fetch all tasks and filter by division
+        const tasksRes = await axios.get(`${apiUrl}/tasks`);
+        const divisionTasks = tasksRes.data.filter(task => task.division_id === user.division_id);
+        setTasks(divisionTasks);
+
+        // Fetch related data
+        const [statusesRes, documentsRes] = await Promise.all([
+          axios.get(`${apiUrl}/statuses`),
+          axios.get(`${apiUrl}/documentpaths`)
+        ]);
+
+        // Process statuses
+        const taskIds = divisionTasks.map(task => task.task_id);
+        const filteredStatuses = statusesRes.data.filter(status => 
+          taskIds.includes(status.task_id)
+        );
+
+        // Calculate status counts
+        const tasksWithLatestStatus = divisionTasks.map(task => {
+          const taskStatuses = filteredStatuses
+            .filter(s => s.task_id === task.task_id)
+            .sort((a, b) => new Date(b.date_changed) - new Date(a.date_changed));
+          return {
+            ...task,
+            latestStatus: taskStatuses[0]?.statut || 'en attente'
+          };
+        });
+
+        const statusCounts = tasksWithLatestStatus.reduce((acc, task) => {
+          acc[task.latestStatus] = (acc[task.latestStatus] || 0) + 1;
+          return acc;
+        }, {});
+
+        setStatuses(Object.entries(statusCounts).map(([statut, count]) => ({
+          statut,
+          count
+        })));
+
+        // Process documents
+        const filteredDocuments = documentsRes.data.filter(doc => 
+          taskIds.includes(doc.task_id)
+        );
+        setDocuments(filteredDocuments);
+
+        // Create history timeline
+        const taskIdToName = divisionTasks.reduce((acc, task) => {
+          acc[task.task_id] = task.task_name;
+          return acc;
+        }, {});
+
+        const statusHistory = filteredStatuses.map(status => ({
+          hist_id: status.status_id,
+          description: `Tâche "${taskIdToName[status.task_id]}" statut mis à jour à ${status.statut}`,
+          change_date: status.date_changed,
+          task_id: status.task_id
+        }));
+
+       
+        setHistory([...statusHistory]
+          .sort((a, b) => new Date(b.change_date) - new Date(a.change_date)));
+
+      } catch (err) {
+        console.error('Erreur lors du chargement des données:', err);
+        setError('Échec du chargement du tableau de bord');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const COLORS = ['lightblue','yellow', 'green', 'red',];
+
+  if (loading) return <div className="loading-indicator">Chargement...</div>;
+  if (error) return <div className="error-message">{error}</div>;
+
+  return (
+    <div className="dashboardContainer">
+      <div className="dashboardHeader">
+        <div className="headerTop">
+          <div>
+            <h1 className="dashboardTitle">Tableau de bord de la division</h1>
+            <p className="dashboardSubtitle">
+              Bienvenue, {divisionData.division_responsable} ({divisionData.division_nom})
+            </p>
+          </div>
+        </div>
+      </div>
+
+    <div className="statsGrid">
+        <div className="statCard">
+          <p className="statLabel">Total des tâches</p>
+          <h2 className="statValue">{tasks.length}</h2>
+        </div>
+
+        <div className="statCard">
+          <p className="statLabel">En cours</p>
+          <h2 className="statValueYellow">
+            {statuses.find(s => s.statut === 'en cours')?.count || 0}
+          </h2>
+        </div>
+
+        <div className="statCard">
+          <p className="statLabel">Terminées</p>
+          <h2 className="statValueGreen">
+            {statuses.find(s => s.statut === 'terminé')?.count || 0}
+          </h2>
+        </div>
+        <div className="statCard">
+          <p className="statLabel">Annulées</p>
+          <h2 className="statValueGreen">
+            {statuses.find(s => s.statut === 'annulé')?.count || 0}
+          </h2>
+        </div>
+
+        <div className="statCard">
+          <p className="statLabel">Documents</p>
+          <h2 className="statValueBlue">{documents.length}</h2>
+        </div>
+      </div>
+
+       <div className="mainContent">
+        <div className="chartCard">
+          <h3 className="sectionTitle">Répartition des tâches</h3>
+          <div className="chartContainer">
+            <Box sx={{ height: '300px', position: 'relative' }}>
+              <Pie
+                data={{
+                  labels: statuses.map(s => s.statut),
+                  datasets: [
+                    {
+                      data: statuses.map(s => s.count),
+                      backgroundColor: statuses.map((_, idx) => COLORS[idx % COLORS.length]),
+                      borderColor: '#fff',
+                      borderWidth: 2,
+                      hoverOffset: 10,
+                      borderRadius: 4,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        padding: 20,
+                        font: {
+                          size: 12,
+                          family: "'Inter', sans-serif"
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                      }
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      titleColor: '#1f2937',
+                      bodyColor: '#4b5563',
+                      padding: 12,
+                      cornerRadius: 8,
+                      displayColors: true,
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.label || '';
+                          const value = context.raw || 0;
+                          const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                          const percentage = Math.round((value / total) * 100);
+                          return `${label}: ${value} tâches (${percentage}%)`;
+                        }
+                      }
+                    }
+                  },
+                  cutout: '60%',
+                  animation: {
+                    animateScale: true,
+                    animateRotate: true
+                  }
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center'
+                }}
+              >
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    mb: 0.5
+                  }}
+                >
+                  {statuses.reduce((sum, item) => sum + item.count, 0)}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Total des tâches
+                </Typography>
+              </Box>
+            </Box>
+          </div>
+        </div>
+
+         <div className="activityCard">
+          <h3 className="sectionTitle">Activité récente</h3>
+          <ul className="activityList">
+           {history.map((activity, index) => (
+              <li key={`activity-${activity.hist_id}-${index}`} className="activityItem">
+                <div className="activityContent">
+                  <p className="activityDescription">{activity.description}</p>
+                  
+                </div>
+              </li>
+            ))} 
+          </ul> 
+        </div> 
+      </div> 
+    </div>
+   
+  );
+};
+
+export default DashboardPage;/*$ echo "# projetsgestion_taches" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/bilalvip550/projetsgestion_taches.git
+git push -u origin main
+Initialized empty Git repository in C:/Users/A D M I N/Documents/gestion_taches/
+.git/
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the nex
+t time Git touches it
+Author identity unknown
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: unable to auto-detect email address (got 'A D M I N@DESKTOP-PE9IGGP.(none
+)')
+error: src refspec main does not match any
+error: failed to push some refs to 'https://github.com/bilalvip550/projetsgestio
+n_taches.git'
+ */

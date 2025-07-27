@@ -1,0 +1,44 @@
+/* Container for all division cards: horizontal scroll + responsive */
+.Divisions {
+    display: flex;
+    flex-wrap: nowrap;        /* Prevent wrapping to new line */
+    overflow-x: auto;         /* Horizontal scrollbar when needed */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    gap: 1rem;                /* Space between cards */
+    padding: 1rem 0;
+  }
+  
+  /* Each card */
+  .divis_card {
+    flex: 0 0 300px;          /* Fixed width; adjust to control how many visible */
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 1rem;
+  }
+  
+  /* Ensure the inner list of tasks doesn’t stretch the card */
+  .list_taches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Hide scrollbar in WebKit but still allow scroll */
+  .Divisions::-webkit-scrollbar {
+    height: 8px;
+  }
+  .Divisions::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 4px;
+  }
+  .Divisions::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* For non-WebKit browsers, a very thin scrollbar */
+  .Divisions {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.2) transparent;
+  }
+  
