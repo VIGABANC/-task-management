@@ -14,6 +14,8 @@ import AdminDachboard from "./pages/user/admin/AdminDashboard";
 import AddDivisionTask from "./pages/user/admin/Taches";
 import AdminDivisions from "./pages/user/admin/Division";
 import AdminSettings from "./pages/user/admin/Settings";
+import SuperadminSettings from "./pages/user/superadmin/SuperadminSettings";
+import DivisionSettings from "./pages/user/divisionresponsable/DivisionSettings";
 import AdminStatistics from "./pages/user/admin/Statistics";
 import AdminHistory from "./pages/user/admin/historyadmin";
 import AdminStatPerDivision from "./pages/user/admin/statisticepardivision";
@@ -30,7 +32,7 @@ import MenuItem from '@mui/material/MenuItem';
 import UserProfile from './pages/user/UserProfile';
 import Dashboardsuperadmin from './pages/user/superadmin/Dashboardsuperadmin';
 import Agenda from './pages/user/superadmin/agenda';
-import Addagenda from './pages/user/admin/Addagenda';
+import AgendaModal from './pages/user/admin/AgendaModal';
 
 export default function Maincontent({ user, setUser }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -204,7 +206,7 @@ export default function Maincontent({ user, setUser }) {
                 <li className="menu-item">
                   <Link to="/app/Settings" className="menu-link" onClick={closeSidebar}>
                     <Iconsio5.IoSettings size={32} className="menu-icon" />
-                    <span className="menu-text">Settings</span>
+                    <span className="menu-text">Paramètres</span>
                   </Link>
                 </li>
               </>
@@ -233,6 +235,12 @@ export default function Maincontent({ user, setUser }) {
                   <Link to={`/app/agenda/${ user.role === 'governeur'?'1':'2' }`} className="menu-link" onClick={closeSidebar}>
                     <Iconsio5.IoCalendar size={32} className="menu-icon" />
                     <span className="menu-text">Agenda</span>
+                  </Link>
+                </li>
+                <li className="menu-item">
+                  <Link to="/app/Settings" className="menu-link" onClick={closeSidebar}>
+                    <Iconsio5.IoSettings size={32} className="menu-icon" />
+                    <span className="menu-text">Paramètres</span>
                   </Link>
                 </li>
                
@@ -339,7 +347,7 @@ export default function Maincontent({ user, setUser }) {
               <Route path="Taches" element={<AddDivisionTask />} />
               <Route path="Division" element={<AdminDivisions />} />
               <Route path="Statistics" element={<AdminStatistics />} />
-              <Route path="addagenda/:secretaire_id" element={<Addagenda />} />
+              <Route path="addagenda/:secretaire_id" element={<AgendaModal />} />
               <Route path="HistoryAdmin/:idid_task" element={<AdminHistory />} />
               <Route path="stidivision/:iddiv" element={<AdminStatPerDivision />} />
               <Route path="Settings" element={<AdminSettings />} />
@@ -352,6 +360,7 @@ export default function Maincontent({ user, setUser }) {
               <Route path="HistoryAdmin/:idid_task" element={<AdminHistory />} />
               <Route path="stidivision/:iddiv" element={<AdminStatPerDivision />} />
               <Route path="agenda/:superadmin_id" element={<Agenda />} />
+              <Route path="Settings" element={<SuperadminSettings />} />
             </>
           )}
 
@@ -361,7 +370,7 @@ export default function Maincontent({ user, setUser }) {
               <Route path="Detail" element={<DivisionTaskDetail user={user} />} />
               <Route path="history/:id_task" element={<DivisionHistory />} />
               <Route path="TaskManagement" element={<DivisionTaskManagement user={user}/>} />
-              <Route path="Settings" element={<AdminSettings />} />
+              <Route path="Settings" element={<DivisionSettings />} />
             </>
           )}
         </Routes>

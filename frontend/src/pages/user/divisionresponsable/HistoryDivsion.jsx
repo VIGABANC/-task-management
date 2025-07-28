@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './styles/History.css';
+import { downloadHistorique } from '../../../utils/download';
 
 export default function History() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export default function History() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      alert(`'History created successfully!'${file}`);
+      alert('History created successfully!');
       navigate('/app/Detail');
     } catch (error) {
       console.error('Submission error:', error);
@@ -139,13 +140,25 @@ export default function History() {
                       <div className="detail-section">
                         <h4>Attached Document:</h4>
                         {hist.dochistorique_path && (
-                          <a
-                            href={`http://localhost:8000/storage/${hist.dochistorique_path}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={async () => {
+                              const result = await downloadHistorique(hist.hist_id);
+                              if (!result.success) {
+                                alert(result.message || 'Erreur lors du téléchargement');
+                              }
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#4a6cf7',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              padding: 0,
+                              font: 'inherit'
+                            }}
                           >
-                            View Document
-                          </a>
+                            Télécharger le document
+                          </button>
                         )}
                       </div>
                     </div>

@@ -32,7 +32,21 @@ const DashboardPage = ({user}) => {
         setLoading(true);
         setError(null);
 
-        // Fetch division data (example for division ID 1)
+        // Vérifier que l'utilisateur et sa division_id existent
+        if (!user || !user.division_id) {
+          setError('Informations utilisateur manquantes. Veuillez vous reconnecter.');
+          setLoading(false);
+          return;
+        }
+
+        // Vérifier que l'utilisateur est bien un division_responsable
+        if (user.role !== 'division_responsable') {
+          setError(`Accès non autorisé. Rôle: ${user.role}`);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch division data
         const divisionRes = await axios.get(`${apiUrl}/divisions/${user.division_id}`);
         setDivisionData(divisionRes.data);
 
@@ -99,14 +113,20 @@ const DashboardPage = ({user}) => {
 
       } catch (err) {
         console.error('Erreur lors du chargement des données:', err);
-        setError('Échec du chargement du tableau de bord');
+        if (err.response?.status === 404) {
+          setError('Division non trouvée. Veuillez vérifier vos permissions.');
+        } else if (err.response?.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+        } else {
+          setError('Échec du chargement du tableau de bord. Veuillez réessayer.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const COLORS = ['lightblue','yellow', 'green', 'red',];
 
@@ -120,7 +140,7 @@ const DashboardPage = ({user}) => {
           <div>
             <h1 className="dashboardTitle">Tableau de bord de la division</h1>
             <p className="dashboardSubtitle">
-              Bienvenue, {divisionData.division_responsable} ({divisionData.division_nom})
+              Bienvenue, {divisionData.division_responsable || user?.username} ({divisionData.division_nom || 'Division'})
             </p>
           </div>
         </div>
@@ -270,32 +290,4 @@ const DashboardPage = ({user}) => {
   );
 };
 
-export default DashboardPage;/*$ echo "# projetsgestion_taches" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/bilalvip550/projetsgestion_taches.git
-git push -u origin main
-Initialized empty Git repository in C:/Users/A D M I N/Documents/gestion_taches/
-.git/
-warning: in the working copy of 'README.md', LF will be replaced by CRLF the nex
-t time Git touches it
-Author identity unknown
-
-*** Please tell me who you are.
-
-Run
-
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
-
-to set your account's default identity.
-Omit --global to set the identity only in this repository.
-
-fatal: unable to auto-detect email address (got 'A D M I N@DESKTOP-PE9IGGP.(none
-)')
-error: src refspec main does not match any
-error: failed to push some refs to 'https://github.com/bilalvip550/projetsgestio
-n_taches.git'
- */
+export default DashboardPage;

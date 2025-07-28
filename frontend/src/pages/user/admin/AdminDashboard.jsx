@@ -88,11 +88,11 @@ export default function AdminDashboard() {
     const grouped = {};
     
     tasks.forEach(task => {
-      const date = task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : 'Aucune date d\'échéance';
+              const date = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : 'Aucune date d\'échéance';
       
       if (!grouped[date]) {
         grouped[date] = [];
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                                 <strong>{truncateText(task.task_name, 30)}</strong>
                                 <p>{truncateText(task.description || 'Aucune description', 50)}</p>
                                 <small>
-                                  {truncateText(division?.division_nom || 'Inconnu', 20)} • 
+                                  {truncateText(division?.division_nom || 'Inconnue', 20)} • 
                                   {task.latestStatus}
                                 </small>
                               </div>

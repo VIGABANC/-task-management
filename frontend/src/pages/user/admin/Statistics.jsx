@@ -20,7 +20,17 @@ import {
   ListItemText,
   ListItemAvatar,
   LinearProgress,
-  alpha
+  alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Snackbar
 } from '@mui/material';
 import {
   BarChart,
@@ -41,7 +51,8 @@ import {
   Assignment as AssignmentIcon,
   Business as BusinessIcon,
   ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon
+  ArrowDownward as ArrowDownwardIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import PropTypes from 'prop-types';
@@ -257,6 +268,11 @@ export default function Statistics() {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -369,6 +385,76 @@ export default function Statistics() {
     useEffect(() => {
       fetchData();
     }, []);
+
+  // Handle opening edit modal
+  const handleEditTask = (task) => {
+    setSelectedTask(task);
+    setSelectedStatus(task.status);
+    setEditModalOpen(true);
+  };
+
+  // Handle closing edit modal
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedTask(null);
+    setSelectedStatus('');
+  };
+
+  // Handle status update
+  const handleUpdateStatus = async () => {
+    if (!selectedTask || !selectedStatus) return;
+
+    try {
+      setUpdating(true);
+      
+      // First, we need to find the latest status record for this task
+      const statusesResponse = await axios.get(`${apiUrl}/statuses`);
+      const taskStatuses = statusesResponse.data
+        .filter(s => s.task_id === selectedTask.task_id)
+        .sort((a, b) => new Date(b.date_changed) - new Date(a.date_changed));
+      
+      const latestStatusRecord = taskStatuses[0];
+      
+      if (!latestStatusRecord) {
+        // If no status record exists, create a new one
+        await axios.post(`${apiUrl}/statuses`, {
+          statut: selectedStatus,
+          date_changed: new Date().toISOString().split('T')[0],
+          task_id: selectedTask.task_id
+        });
+      } else {
+        // Update the existing status record
+        await axios.put(`${apiUrl}/statuses/${latestStatusRecord.status_id}`, {
+          statut: selectedStatus,
+          date_changed: new Date().toISOString().split('T')[0],
+          task_id: selectedTask.task_id
+        });
+      }
+
+      setSnackbar({
+        open: true,
+        message: 'Statut de la tâche mis à jour avec succès dans la base de données!',
+        severity: 'success'
+      });
+
+      handleCloseEditModal();
+      // Don't refresh data - let user manually refresh if needed
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      setSnackbar({
+        open: true,
+        message: `Erreur: ${error.response?.data?.message || error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const calculateMonthlyTasks = (tasks) => {
     // Obtenir l'année actuelle
@@ -814,6 +900,20 @@ export default function Statistics() {
                       }
                       secondaryTypographyProps={{ component: 'span' }}
                     />
+                    <Tooltip title="Modifier le statut">
+                      <IconButton
+                        onClick={() => handleEditTask(task)}
+                        size="small"
+                        sx={{
+                          color: theme.palette.primary.main,
+                          '&:hover': {
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          },
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </ListItem>
                 ))}
               </List>
@@ -899,6 +999,66 @@ export default function Statistics() {
           </StyledPaper>
         </Grid>
       </Grid>
+
+      {/* Edit Task Status Modal */}
+      <Dialog 
+        open={editModalOpen} 
+        onClose={handleCloseEditModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Modifier le statut de la tâche
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              <strong>Tâche:</strong> {selectedTask?.task_name}
+            </Typography>
+            <FormControl fullWidth>
+              <InputLabel>Nouveau statut</InputLabel>
+              <Select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                label="Nouveau statut"
+              >
+                <MenuItem value="en attente">En attente</MenuItem>
+                <MenuItem value="en cours">En cours</MenuItem>
+                <MenuItem value="terminé">Terminé</MenuItem>
+                <MenuItem value="annulé">Annulé</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditModal} disabled={updating}>
+            Annuler
+          </Button>
+          <Button 
+            onClick={handleUpdateStatus} 
+            variant="contained" 
+            disabled={updating || !selectedStatus}
+          >
+            {updating ? 'Mise à jour...' : 'Mettre à jour'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </DashboardContainer>
   );
 }

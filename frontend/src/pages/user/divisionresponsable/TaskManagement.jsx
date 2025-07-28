@@ -103,29 +103,10 @@ export default function TaskManagement({ user }) {
         });
       }
 
-      // Update UI only after successful API call
-      setAllTasks(prevTasks =>
-        prevTasks.map(task => {
-          if (task.task_id === taskId) {
-            return {
-              ...task,
-              statuses: [
-                ...(task.statuses || []),
-                {
-                  statut: 'en cours',
-                  date_changed: new Date().toISOString(),
-                  task_id: taskId
-                }
-              ]
-            };
-          }
-          return task;
-        })
-      );
-
+      // Don't update frontend state - only show success message
       setSnackbar({
         open: true,
-        message: 'Statut de la tâche mis à jour à "en_cours"',
+        message: 'Statut de la tâche mis à jour à "en_cours" dans la base de données!',
         severity: 'success'
       });
     } catch (error) {

@@ -58,7 +58,7 @@ export default function TaschesDetaile({ user }) {
     const today = new Date().toISOString().split('T')[0];
     
     try {
-      // Update status using PUT
+      // Update status using PUT - only backend update
       const latestStatus = selectedTask.statusHistory.find(status => status.statut === selectedTask.status);
       await axios.put(`${apiUrl}/statuses/${latestStatus.state_id}`, {
         task_id: selectedTask.task_id,
@@ -66,27 +66,13 @@ export default function TaschesDetaile({ user }) {
         date_changed: today,
       });
 
-      // If status is "terminé", update finish date
-      
-
-      // Refresh task data
-      const [taskRes, statusesRes] = await Promise.all([
-        axios.get(`${apiUrl}/tasks/${selectedTask.task_id}`),
-        axios.get(`${apiUrl}/statuses?task_id=${selectedTask.task_id}`)
-      ]);
-
-      const updatedTask = {
-        ...taskRes.data,
-        status: newStatus,
-        statusHistory: statusesRes.data.sort((a, b) => new Date(b.date_changed) - new Date(a.date_changed))
-      };
-
-      // Update state
-      setTasks(prev => prev.map(t => 
-        t.task_id === selectedTask.task_id ? updatedTask : t
-      ));
-      setSelectedTask(updatedTask);
+      // Don't update frontend state - only show success message
+      setError(null);
       setNewStatus('');
+      setSelectedTask(null); // Close modal
+      
+      // Show success message
+      alert('Statut mis à jour avec succès dans la base de données!');
       
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update status');
